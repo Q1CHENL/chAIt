@@ -1,0 +1,153 @@
+QMainWindow { 
+    background-color: #2d2d2d;
+}
+
+#tabCornerBtn {
+    background-color: transparent;
+    color: #cccccc;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0px;
+    outline: none;
+}
+#tabCornerBtn:hover {
+    background-color: #4a4a4a;
+    border: 1px solid #5a5a5a;
+    color: #ffffff;
+}
+#tabCornerBtn:pressed {
+    background-color: #5a5a5a;
+    border: 1px solid #6a6a6a;
+    color: #ffffff;
+}
+
+/* Style tab bar container specifically - this covers the whole bar */
+QTabWidget::tab-bar {
+    background-color: #2d2d2d; /* Dark background for the entire bar */
+    alignment: left;
+    border: none;
+    margin: 0;
+    /* Add padding here to make space for corner widget */
+    padding-right: 60px; 
+}
+
+/* Ensure the corner widget itself uses the tab-bar background */
+/* Target corner widget more specifically if possible, otherwise this might affect other QWidgets */
+QTabWidget > QWidget { 
+     background-color: #2d2d2d;
+     border: none;
+}
+
+/* Hide the QTabWidget's tear indicator */
+QTabWidget::tear {
+    background-color: #2d2d2d;
+    width: 0px;
+    border: none;
+}
+
+/* Style the content pane */
+QTabWidget::pane {
+    background-color: #2d2d2d; /* Changed from white to match the dark theme */
+    border: none;
+    margin: 0;
+    padding: 0;
+    /* Add top border to separate from dark bar */
+    border-top: 1px solid #444444; 
+}
+
+/* Hide the scroll buttons */
+QTabBar QToolButton {
+    background-color: #2d2d2d;
+    color: #2d2d2d;
+    border: none;
+    width: 0px;
+    max-width: 0px;
+    min-width: 0px;
+}
+
+/* Style the tab bar itself (sits on top of tab-bar) */
+QTabBar {
+    /* Remove padding, it's on tab-bar now */
+    background-color: transparent; /* Make transparent */
+    border: none;
+    margin: 0;
+}
+
+QTabBar::scroller { width: 0px; }
+
+/* Style individual tabs */
+QTabBar::tab {
+    background: transparent;
+    border: none;
+    padding: 8px 14px;
+    margin-right: 2px;
+    color: #aaaaaa;
+    border-bottom: 2px solid transparent;
+    min-width: 0px;
+    max-width: 200px;
+}
+
+QTabBar::tab:selected {
+    background: transparent;
+    color: #ffffff;
+    font-weight: 600;
+    border-bottom: 2px solid #0969da;
+}
+
+QTabBar::tab:!selected:hover {
+    background: #404040;
+    color: #dddddd;
+    border-bottom: 2px solid #555555;
+}
+
+/* Styles for AddSiteDialog */
+AddSiteDialog {
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+AddSiteDialog QLabel { /* More specific selector */
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 14px;
+}
+AddSiteDialog QLineEdit { /* More specific selector */
+    background-color: #3a3a3a;
+    color: #ffffff;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 14px;
+}
+AddSiteDialog QLineEdit:focus { /* More specific selector */
+    border: 1px solid #0969da;
+}
+/* General QPushButton style within the dialog */
+AddSiteDialog QPushButton { 
+    background-color: #444444;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    min-width: 80px;
+}
+AddSiteDialog QPushButton:hover {
+    background-color: #555555;
+}
+AddSiteDialog QPushButton:pressed {
+    background-color: #666666;
+}
+/* Specific styles for OK/Cancel buttons within the dialog's button box */
+AddSiteDialog #dialogButtons QPushButton[text="OK"] {
+    background-color: #0969da;
+}
+AddSiteDialog #dialogButtons QPushButton[text="OK"]:hover {
+    background-color: #0a7ff5;
+}
+AddSiteDialog #dialogButtons QPushButton[text="OK"]:pressed {
+    background-color: #0753a8;
+}
+/* You might want to style the Cancel button explicitly too if needed */
+/* AddSiteDialog #dialogButtons QPushButton[text="Cancel"] { ... } */
