@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=chAIt
+Comment=AI Chat Wrapper
+Exec=chait
+# The icon name 'chait' assumes the icon file (e.g., icon.png) is installed
+# to a standard location like /usr/share/pixmaps/chait.png or similar
+# by the installation process or manually.
+Icon=chait
+Terminal=false
+Type=Application
+Categories=Utility;Network;WebBrowser; # Adjust categories as appropriate
+StartupNotify=true
