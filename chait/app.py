@@ -203,6 +203,19 @@ class MainWindow(QMainWindow):
     def create_web_view(self, url_str):
         """Creates a QWebEngineView with the shared profile and loads the URL."""
         web_page = QWebEnginePage(self.profile, self)
+
+        # --- Grant Clipboard Permission ---
+        def grant_feature_permission(origin: QUrl, feature: QWebEnginePage.Feature):
+            if feature == QWebEnginePage.Feature.ClipboardReadWrite:
+                # Grant permission for clipboard access
+                web_page.setFeaturePermission(origin, feature, QWebEnginePage.PermissionPolicy.PermissionGrantedByUser)
+            else:
+                # Default policy for other features
+                web_page.setFeaturePermission(origin, feature, QWebEnginePage.PermissionPolicy.PermissionDeniedByUser)
+
+        web_page.featurePermissionRequested.connect(grant_feature_permission)
+        # --- End Grant Clipboard Permission ---
+
         web_view = QWebEngineView()
         web_view.setPage(web_page)
         web_view.setUrl(QUrl(url_str))
