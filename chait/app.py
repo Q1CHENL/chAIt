@@ -185,6 +185,9 @@ class MainWindow(QMainWindow):
         self.refresh_btn.setFixedSize(24, 24)
         self.refresh_btn.setToolTip("Refresh Current Tab")
         self.refresh_btn.clicked.connect(self.refresh_current_tab)
+
+        self.refresh_sc = QShortcut(QKeySequence("Ctrl+R"), self)
+        self.refresh_sc.activated.connect(self.refresh_current_tab)
         corner_layout.addWidget(self.refresh_btn, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         self.add_btn = QPushButton(add_icon_char)
