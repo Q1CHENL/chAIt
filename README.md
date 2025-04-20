@@ -2,7 +2,7 @@
 
 A vibe coded simple ai chat wrapper using qt6 (primarily built for personal use)
 
-![chait](screenshot.png)
+![chait](chait/assets/screenshot.png)
 
 ## Run Development
 
