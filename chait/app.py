@@ -4,12 +4,12 @@ import json
 import importlib.resources
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QTabWidget,
-    QMessageBox, QSystemTrayIcon, QMenu, QApplication
+    QMessageBox, QSystemTrayIcon, QMenu, QApplication, QLineEdit, QLabel
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
 from PyQt6.QtCore import QUrl, Qt, QStandardPaths, QDir
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtGui import QIcon, QAction, QKeySequence, QShortcut
 
 from .dialogs import AddSiteDialog
 
@@ -40,7 +40,17 @@ class MainWindow(QMainWindow):
         self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
 
         self.init_ui()
+        # Ctrl+F shows find bar, Esc hides
+        self.find_sc = QShortcut(QKeySequence("Ctrl+F"), self)
+        self.find_sc.activated.connect(self.find_in_page)
+        self.close_find_sc = QShortcut(QKeySequence("Esc"), self)
+        self.close_find_sc.activated.connect(self.hide_find_bar)
         self.init_tray_icon()
+
+        # initialize search state
+        self.search_text = ""
+        self.search_count = 0
+        self.search_index = 0
 
     def load_sites(self):
         """Loads sites from the JSON file or returns defaults."""
@@ -198,6 +208,49 @@ class MainWindow(QMainWindow):
             self.tab_widget.setCurrentIndex(0)
 
         main_layout.addWidget(self.tab_widget, 1)
+        # find bar widget for real-time search
+        self.find_bar = QWidget()
+        find_layout = QHBoxLayout(self.find_bar)
+        find_layout.setContentsMargins(5,2,5,2)
+        find_layout.setSpacing(5)
+        # label shows current/total matches
+        self.find_label = QLabel("0/0")
+        self.find_input = QLineEdit()
+        # always show border, styled differently when focused
+        self.find_input.setFrame(True)
+        self.find_input.setStyleSheet(
+            # normal: 1px border + 2px padding, focus: 2px border + 1px padding to keep content area same
+            "QLineEdit{border:1px solid #ccc;border-radius:4px;padding:2px;} "
+            "QLineEdit:focus{border:2px solid #007acc;border-radius:4px;padding:1px;}"
+        )
+        self.find_input.setPlaceholderText("Search...")
+        # buttons to navigate matches
+        self.prev_find_btn = QPushButton("▲")
+        self.prev_find_btn.setFixedSize(24, 24)
+        self.prev_find_btn.setToolTip("Previous Match")
+        self.prev_find_btn.clicked.connect(self.find_prev)
+        self.next_find_btn = QPushButton("▼")
+        self.next_find_btn.setFixedSize(24, 24)
+        self.next_find_btn.setToolTip("Next Match")
+        self.next_find_btn.clicked.connect(self.find_next)
+        # frameless until hover: flat buttons with hover border
+        self.prev_find_btn.setFlat(True)
+        self.next_find_btn.setFlat(True)
+        btn_style = '''
+            QPushButton { border: none; background: transparent; }
+            QPushButton:hover { border: 1px solid #007acc; border-radius:4px; background: rgba(0,122,204,0.1); }
+        '''
+        self.prev_find_btn.setStyleSheet(btn_style)
+        self.next_find_btn.setStyleSheet(btn_style)
+        find_layout.addWidget(self.find_label)
+        find_layout.addWidget(self.prev_find_btn)
+        find_layout.addWidget(self.next_find_btn)
+        find_layout.addWidget(self.find_input, 1)
+        main_layout.addWidget(self.find_bar)
+        self.find_bar.hide()
+        # connect real-time find
+        self.find_input.textChanged.connect(self.do_find)
+        self.find_input.returnPressed.connect(self.find_next)
         self.setCentralWidget(main_widget)
 
     def create_web_view(self, url_str):
@@ -228,6 +281,102 @@ class MainWindow(QMainWindow):
             web_view = self.tab_widget.widget(current_index)
             if isinstance(web_view, QWebEngineView):
                 web_view.reload()
+
+    def find_in_page(self):
+        """Toggle find bar visibility and focus input."""
+        if self.find_bar.isVisible():
+            self.hide_find_bar()
+        else:
+            self.find_bar.show()
+            self.find_input.setFocus()
+            self.find_input.selectAll()
+
+    def hide_find_bar(self):
+        """Hide find bar and clear highlights."""
+        self.find_bar.hide()
+        self.find_input.clear()
+        web_view = self.tab_widget.currentWidget()
+        if isinstance(web_view, QWebEngineView):
+            web_view.findText("")
+
+    def do_find(self, text):
+        """Highlight occurrences of `text` in the page."""
+        # track current search text and reset index
+        self.search_text = text
+        self.search_index = 0
+        web_view = self.tab_widget.currentWidget()
+        if not isinstance(web_view, QWebEngineView):
+            return
+        # clear previous highlights
+        web_view.findText("")
+        if not text:
+            self.find_label.setText("0/0")
+            return
+        # try highlighting all occurrences if supported, else highlight first
+        from PyQt6.QtWebEngineCore import QWebEnginePage
+        flag = getattr(QWebEnginePage.FindFlag, 'HighlightAllOccurrences', None)
+        if flag is not None:
+            web_view.findText(text, flag)
+        else:
+            web_view.findText(text)
+        # count occurrences via JS and update label
+        page = web_view.page()
+        escaped = json.dumps(text)
+        js = f"(function() {{ var r = new RegExp({escaped}, 'gi'); var m = document.body.innerText.match(r); return m ? m.length : 0; }})()"
+        page.runJavaScript(js, self._on_search_count)
+
+    def find_next(self):
+        """Move to the next occurrence of the current search text."""
+        if not self.search_text or self.search_count == 0:
+            return
+        # increment index with wrap
+        self.search_index = (self.search_index % self.search_count) + 1
+        web_view = self.tab_widget.currentWidget()
+        if not isinstance(web_view, QWebEngineView):
+            return
+        from PyQt6.QtWebEngineCore import QWebEnginePage
+        # use wrap-around if available
+        flag = getattr(QWebEnginePage.FindFlag, 'FindWrapsAroundDocument', QWebEnginePage.FindFlag(0))
+        web_view.findText(self.search_text, flag)
+        self._update_label()
+
+    def find_prev(self):
+        """Move to the previous occurrence of the current search text."""
+        if not self.search_text or self.search_count == 0:
+            return
+        # decrement index with wrap
+        self.search_index = ((self.search_index - 2) % self.search_count) + 1
+        web_view = self.tab_widget.currentWidget()
+        if not isinstance(web_view, QWebEngineView):
+            return
+        from PyQt6.QtWebEngineCore import QWebEnginePage
+        # backward search with wrap-around
+        flag = QWebEnginePage.FindFlag.FindBackward
+        wrap = getattr(QWebEnginePage.FindFlag, 'FindWrapsAroundDocument', None)
+        if wrap is not None:
+            flag |= QWebEnginePage.FindFlag.FindWrapsAroundDocument
+        web_view.findText(self.search_text, flag)
+        self._update_label()
+
+    def _on_search_count(self, count):
+        """Callback after JS count. Updates total and sets initial index/label."""
+        try:
+            self.search_count = int(count)
+        except:
+            self.search_count = 0
+        if self.search_count > 0:
+            # first match already highlighted by do_find
+            self.search_index = 1
+        else:
+            self.search_index = 0
+        self._update_label()
+
+    def _update_label(self):
+        """Update find label to show current index/total."""
+        if self.search_count > 0:
+            self.find_label.setText(f"{self.search_index}/{self.search_count}")
+        else:
+            self.find_label.setText("0/0")
 
     def add_site_tab(self):
         """Prompts user for site details, adds a new tab, and saves the updated site list."""
