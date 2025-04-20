@@ -135,8 +135,13 @@ class MainWindow(QMainWindow):
 
     def show_window(self):
         """Shows and activates the main window."""
-        self.showNormal()
-        self.activateWindow()
+
+        if self.isVisible():
+            self.activateWindow()
+            self.raise_()
+        else:
+            self.showNormal()
+            self.activateWindow()
 
     def closeEvent(self, event):
         """Overrides the close event to hide the window to the tray."""
