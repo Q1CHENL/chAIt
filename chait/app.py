@@ -4,14 +4,14 @@ import json
 import importlib.resources
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QTabWidget,
-    QMessageBox, QSystemTrayIcon, QMenu, QApplication, QLineEdit, QLabel
+    QMessageBox, QSystemTrayIcon, QMenu, QApplication, QLineEdit, QLabel, QDialog
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
 from PyQt6.QtCore import QUrl, Qt, QStandardPaths, QDir
 from PyQt6.QtGui import QIcon, QAction, QKeySequence, QShortcut
 
-from .dialogs import AddSiteDialog
+from .dialogs import AddSiteDialog, ConfirmDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -208,6 +208,10 @@ class MainWindow(QMainWindow):
             self.tab_widget.setCurrentIndex(0)
 
         main_layout.addWidget(self.tab_widget, 1)
+        # right-click context menu on tabs
+        self.tab_widget.tabBar().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tab_widget.tabBar().customContextMenuRequested.connect(self.on_tab_context_menu)
+
         # find bar widget for real-time search
         self.find_bar = QWidget()
         find_layout = QHBoxLayout(self.find_bar)
@@ -407,3 +411,56 @@ class MainWindow(QMainWindow):
             new_index = self.tab_widget.addTab(web_view, name)
             self.web_views[new_index] = web_view
             self.tab_widget.setCurrentIndex(new_index)
+
+    def on_tab_context_menu(self, pos):
+        """Show context menu on tab right-click."""
+        index = self.tab_widget.tabBar().tabAt(pos)
+        if index < 0:
+            return
+        menu = QMenu(self)
+        edit_act = menu.addAction("Edit Site")
+        remove_act = menu.addAction("Remove Site")
+        action = menu.exec(self.tab_widget.tabBar().mapToGlobal(pos))
+        if action == edit_act:
+            self.edit_site(index)
+        elif action == remove_act:
+            self.remove_site(index)
+
+    def edit_site(self, index):
+        """Edit the name and URL of a site."""
+        site = self.sites[index]
+        dialog = AddSiteDialog(self)
+        dialog.name_input.setText(site['name'])
+        dialog.url_input.setText(site['url'])
+        if dialog.exec() == AddSiteDialog.DialogCode.Accepted:
+            name, url = dialog.get_inputs()
+            if not name:
+                QMessageBox.warning(self, "Edit Site", "Site Name cannot be empty.")
+                return
+            if not url:
+                QMessageBox.warning(self, "Edit Site", "URL cannot be empty.")
+                return
+            if not url.startswith("http://") and not url.startswith("https://"):
+                url = "https://" + url
+            if any(i != index and (s['name'] == name or s['url'] == url) for i, s in enumerate(self.sites)):
+                QMessageBox.warning(self, "Edit Site", "A site with this name or URL already exists.")
+                return
+            self.sites[index] = { 'name': name, 'url': url }
+            self.save_sites()
+            self.tab_widget.setTabText(index, name)
+            web_view = self.web_views[index]
+            web_view.setUrl(QUrl(url))
+
+    def remove_site(self, index):
+        """Remove a site and its tab."""
+        site = self.sites[index]
+        # styled confirmation dialog
+        dialog = ConfirmDialog(f"Remove site '{site['name']}'?", self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            del self.sites[index]
+            self.save_sites()
+            self.tab_widget.removeTab(index)
+            # rebuild web_views mapping
+            self.web_views.clear()
+            for idx in range(self.tab_widget.count()):
+                self.web_views[idx] = self.tab_widget.widget(idx)

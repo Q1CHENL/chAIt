@@ -26,7 +26,6 @@ QMainWindow {
 /* Style tab bar container specifically - this covers the whole bar */
 QTabWidget::tab-bar {
     background-color: #2d2d2d; /* Dark background for the entire bar */
-    alignment: left;
     border: none;
     margin: 0;
     /* Add padding here to make space for corner widget */
@@ -96,10 +95,17 @@ QTabBar::tab:selected {
     border-bottom: 2px solid #0969da;
 }
 
-QTabBar::tab:!selected:hover {
+/* Hover styles for tabs */
+QTabBar::tab:hover {
     background: #404040;
     color: #dddddd;
     border-bottom: 2px solid #555555;
+}
+/* Maintain selected style on hover */
+QTabBar::tab:selected:hover {
+    background: transparent;
+    color: #ffffff;
+    border-bottom: 2px solid #0969da;
 }
 
 /* Styles for AddSiteDialog */
@@ -151,3 +157,48 @@ AddSiteDialog #dialogButtons QPushButton[text="OK"]:pressed {
 }
 /* You might want to style the Cancel button explicitly too if needed */
 /* AddSiteDialog #dialogButtons QPushButton[text="Cancel"] { ... } */
+
+/* Shared dialog styles for AddSiteDialog and ConfirmDialog */
+AddSiteDialog, ConfirmDialog {
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+AddSiteDialog QLabel, ConfirmDialog QLabel {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 14px;
+}
+AddSiteDialog QPushButton, ConfirmDialog QPushButton {
+    background-color: #444444;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    min-width: 80px;
+}
+AddSiteDialog QPushButton:hover, ConfirmDialog QPushButton:hover {
+    background-color: #555555;
+}
+AddSiteDialog QPushButton:pressed, ConfirmDialog QPushButton:pressed {
+    background-color: #666666;
+}
+/* Specific OK/Yes & Cancel/No button styles */
+AddSiteDialog #dialogButtons QPushButton[text="OK"], ConfirmDialog #confirmButtons QPushButton[text="Yes"] {
+    background-color: #0969da;
+}
+AddSiteDialog #dialogButtons QPushButton[text="OK"]:hover, ConfirmDialog #confirmButtons QPushButton[text="Yes"]:hover {
+    background-color: #0a7ff5;
+}
+AddSiteDialog #dialogButtons QPushButton[text="OK"]:pressed, ConfirmDialog #confirmButtons QPushButton[text="Yes"]:pressed {
+    background-color: #0753a8;
+}
+AddSiteDialog #dialogButtons QPushButton[text="Cancel"], ConfirmDialog #confirmButtons QPushButton[text="No"] {
+    background-color: #777777;
+}
+AddSiteDialog #dialogButtons QPushButton[text="Cancel"]:hover, ConfirmDialog #confirmButtons QPushButton[text="No"]:hover {
+    background-color: #888888;
+}
+AddSiteDialog #dialogButtons QPushButton[text="Cancel"]:pressed, ConfirmDialog #confirmButtons QPushButton[text="No"]:pressed {
+    background-color: #555555;
+}
