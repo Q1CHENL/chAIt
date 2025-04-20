@@ -148,12 +148,6 @@ class MainWindow(QMainWindow):
         if self.tray_icon and self.tray_icon.isVisible():
             event.ignore()
             self.hide()
-            self.tray_icon.showMessage(
-                "chAIt",
-                "Application minimized to tray.",
-                QSystemTrayIcon.MessageIcon.Information,
-                2000
-            )
         else:
             event.accept()
 
