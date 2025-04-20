@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
 
         corner_widget = QWidget()
         corner_layout = QHBoxLayout(corner_widget)
-        corner_layout.setContentsMargins(0, 3, 10, 0)
+        corner_layout.setContentsMargins(0, 3, 10, 3)
         corner_layout.setSpacing(5)
         corner_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
