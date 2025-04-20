@@ -13,6 +13,16 @@ from PyQt6.QtGui import QIcon, QAction, QKeySequence, QShortcut
 
 from .dialogs import AddSiteDialog, ConfirmDialog
 
+# Subclass to capture JS console messages and print them
+class DebugWebEnginePage(QWebEnginePage):
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
+        # Print JS console messages to Python stdout
+        try:
+            level_name = QWebEnginePage.JavaScriptConsoleMessageLevel(level).name
+        except Exception:
+            level_name = str(level)
+        print(f"JS Console [{level_name}] {sourceID}:{lineNumber} - {message}")
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -55,8 +65,7 @@ class MainWindow(QMainWindow):
     def load_sites(self):
         """Loads sites from the JSON file or returns defaults."""
         default_sites = [
-            {"name": "ChatGPT", "url": "https://chatgpt.com"},
-            {"name": "AI Studio", "url": "https://aistudio.google.com"}
+            {"name": "ChatGPT", "url": "https://chatgpt.com"}
         ]
         if os.path.exists(self.sites_file_path):
             try:
@@ -261,7 +270,7 @@ class MainWindow(QMainWindow):
 
     def create_web_view(self, url_str):
         """Creates a QWebEngineView with the shared profile and loads the URL."""
-        web_page = QWebEnginePage(self.profile, self)
+        web_page = DebugWebEnginePage(self.profile, self)
 
         # --- Grant Clipboard Permission ---
         def grant_feature_permission(origin: QUrl, feature: QWebEnginePage.Feature):
