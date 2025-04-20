@@ -177,7 +177,7 @@ class MainWindow(QMainWindow):
         corner_layout.setSpacing(5)
         corner_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        refresh_icon_char = "↻"
+        refresh_icon_char = "⟳"
         add_icon_char = "+"
 
         self.refresh_btn = QPushButton(refresh_icon_char)
