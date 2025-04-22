@@ -9,19 +9,31 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
 from PyQt6.QtCore import QUrl, Qt, QStandardPaths, QDir
-from PyQt6.QtGui import QIcon, QAction, QKeySequence, QShortcut
+from PyQt6.QtGui import QIcon, QAction, QKeySequence, QShortcut, QDesktopServices
 
 from .dialogs import AddSiteDialog, ConfirmDialog
 
 # Subclass to capture JS console messages and print them
 class DebugWebEnginePage(QWebEnginePage):
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        # Print JS console messages to Python stdout
         try:
             level_name = QWebEnginePage.JavaScriptConsoleMessageLevel(level).name
         except Exception:
             level_name = str(level)
         print(f"JS Console [{level_name}] {sourceID}:{lineNumber} - {message}")
+
+    def acceptNavigationRequest(self, url: QUrl, nav_type: QWebEnginePage.NavigationType, is_main_frame: bool):
+        if nav_type == QWebEnginePage.NavigationType.NavigationTypeLinkClicked:
+            QDesktopServices.openUrl(url)
+            return False
+        return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+
+    def createWindow(self, window_type):
+        new_page = DebugWebEnginePage(self.profile(), self)
+        new_view = QWebEngineView()
+        new_view.setPage(new_page)
+        new_view.show()
+        return new_page
 
 class MainWindow(QMainWindow):
     def __init__(self):
